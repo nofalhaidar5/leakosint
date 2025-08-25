@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LeakOSINT Lookup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            'inter': ['Inter', 'sans-serif'],
+          },
+          animation: {
+            'bounce-slow': 'bounce 2s infinite',
+            'pulse-slow': 'pulse 3s infinite',
+            'spin-slow': 'spin 3s linear infinite',
+            'fadeIn': 'fadeIn 0.5s ease-in-out',
+            'slideUp': 'slideUp 0.6s ease-out',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(10px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(30px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' }
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-effect {
+      backdrop-filter: blur(20px);
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .gradient-bg {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .cyber-border {
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .cyber-border::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #3b82f6, transparent);
+      animation: scan 2s infinite;
+    }
+    
+    @keyframes scan {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+    
+    .loading-dots::after {
+      content: '';
+      animation: dots 1.5s infinite;
+    }
+    
+    @keyframes dots {
+      0%, 20% { content: ''; }
+      40% { content: '.'; }
+      60% { content: '..'; }
+      80%, 100% { content: '...'; }
+    }
+    
+    .copy-button {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: scale(0.9);
+      opacity: 0.7;
+    }
+    
+    .copy-button:hover {
+      transform: scale(1);
+      opacity: 1;
+    }
+    
+    .json-key { color: #3b82f6; }
+    .json-string { color: #10b981; }
+    .json-number { color: #f59e0b; }
+    .json-boolean { color: #ef4444; }
+    .json-null { color: #6b7280; }
+  </style>
+</head>
+<body class="min-h-screen font-inter gradient-bg">
+  <!-- Background Animation -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none">
+    <div class="absolute -top-40 -right-40 w-80 h-80 bg-blue-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse-slow"></div>
+    <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-bounce-slow"></div>
+    <div class="absolute top-40 left-1/2 w-80 h-80 bg-pink-400 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-spin-slow"></div>
+  </div>
+
+  <div class="container mx-auto px-3 sm:px-4 py-4 sm:py-8 relative z-10 min-h-screen">
+    <div class="max-w-4xl mx-auto">
+      <!-- Header -->
+      <div class="text-center mb-6 sm:mb-12 animate-fadeIn">
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-2 sm:mb-4 drop-shadow-lg">
+          <span class="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent">
+            LeakOSINT
+          </span>
+        </h1>
+        <p class="text-base sm:text-xl text-white/80 font-light">Advanced OSINT Search Tool</p>
+        <div class="w-20 sm:w-32 h-1 bg-gradient-to-r from-blue-400 to-purple-600 mx-auto mt-2 sm:mt-4 rounded-full"></div>
+      </div>
+
+      <!-- Main Card -->
+      <div class="glass-effect rounded-2xl sm:rounded-3xl p-4 sm:p-6 md:p-8 shadow-2xl animate-slideUp">
+        <div class="cyber-border rounded-xl sm:rounded-2xl p-4 sm:p-6 bg-white/5">
+          <!-- Search Form -->
+          <div class="space-y-4 sm:space-y-6">
+            <div class="group">
+              <label for="request" class="block text-sm font-semibold text-gray-700 mb-2 transition-colors group-hover:text-blue-600">
+                🎯 Kata Kunci / Email / Nama
+              </label>
+              <div class="relative">
+                <textarea 
+                  id="request" 
+                  placeholder="Contoh: Elon Reeve Musk atau example@gmail.com" 
+                  rows="3"
+                  class="w-full p-3 sm:p-4 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 resize-none bg-white/80 backdrop-blur-sm text-sm sm:text-base"
+                ></textarea>
+                <div class="absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+              <div class="group">
+                <label for="lang" class="block text-sm font-semibold text-gray-700 mb-2 transition-colors group-hover:text-blue-600">
+                  🌐 Bahasa (Opsional)
+                </label>
+                <select id="lang" class="w-full p-3 sm:p-4 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 bg-white/80 backdrop-blur-sm text-sm sm:text-base">
+                  <option value="">Default</option>
+                  <option value="ru">🇷🇺 Russia (ru)</option>
+                  <option value="en">🇺🇸 English (en)</option>
+                </select>
+              </div>
+
+              <div class="group">
+                <label for="limit" class="block text-sm font-semibold text-gray-700 mb-2 transition-colors group-hover:text-blue-600">
+                  📊 Limit (Opsional)
+                </label>
+                <input 
+                  type="number" 
+                  id="limit" 
+                  placeholder="Contoh: 10"
+                  class="w-full p-3 sm:p-4 border-2 border-gray-200 rounded-lg sm:rounded-xl focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition-all duration-300 bg-white/80 backdrop-blur-sm text-sm sm:text-base"
+                >
+              </div>
+            </div>
+
+            <button 
+              onclick="sendRequest()" 
+              id="searchBtn"
+              class="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg sm:rounded-xl hover:from-blue-700 hover:to-purple-700 transform hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-lg hover:shadow-xl text-sm sm:text-base"
+            >
+              <span id="searchText">🔍 Cari Sekarang</span>
+              <span id="loadingText" class="hidden">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Sedang mencari<span class="loading-dots"></span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="mt-6 sm:mt-8" id="resultsSection" style="display: none;">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800 flex items-center">
+              <span class="mr-2">📋</span> Hasil Pencarian
+            </h2>
+            <button 
+              onclick="copyResults()" 
+              id="copyBtn"
+              class="copy-button flex items-center justify-center space-x-2 bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium shadow-md hover:shadow-lg w-full sm:w-auto text-sm"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+              </svg>
+              <span id="copyText">Salin</span>
+            </button>
+          </div>
+          
+          <div class="relative">
+            <pre id="output" class="bg-gray-900 text-green-400 p-4 sm:p-6 rounded-lg sm:rounded-xl overflow-x-auto font-mono text-xs sm:text-sm leading-relaxed shadow-inner border border-gray-700">Belum ada hasil...</pre>
+            <div class="absolute top-2 sm:top-4 right-2 sm:right-4 flex space-x-1 sm:space-x-2">
+              <div class="w-2 h-2 sm:w-3 sm:h-3 bg-red-500 rounded-full"></div>
+              <div class="w-2 h-2 sm:w-3 sm:h-3 bg-yellow-500 rounded-full"></div>
+              <div class="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center mt-6 sm:mt-8 animate-fadeIn">
+        <p class="text-white/60 text-xs sm:text-sm">
+          &copy; 2025 LeakOSINT UI by 
+          <span class="bg-gradient-to-r from-blue-400 to-purple-600 bg-clip-text text-transparent font-semibold">Kamu</span> 
+          ✨
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-4 left-1/2 transform -translate-x-1/2 translate-y-[-100px] sm:top-4 sm:right-4 sm:left-auto sm:transform-none sm:translate-x-full bg-green-500 text-white px-4 py-3 rounded-lg shadow-lg transition-all duration-300 z-50 text-sm max-w-xs">
+    <div class="flex items-center space-x-2">
+      <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+      </svg>
+      <span class="truncate">Berhasil disalin!</span>
+    </div>
+  </div>
+
+  <script>
+    let lastResult = '';
+
+    async function sendRequest() {
+      const request = document.getElementById('request').value.trim();
+      if (!request) {
+        showToast('Silakan masukkan kata kunci atau email!', 'error');
+        return;
+      }
+
+      const lang = document.getElementById('lang').value;
+      const limit = document.getElementById('limit').value;
+      const output = document.getElementById('output');
+      const searchBtn = document.getElementById('searchBtn');
+      const searchText = document.getElementById('searchText');
+      const loadingText = document.getElementById('loadingText');
+      const resultsSection = document.getElementById('resultsSection');
+
+      // Show loading state
+      searchBtn.disabled = true;
+      searchText.classList.add('hidden');
+      loadingText.classList.remove('hidden');
+      
+      const data = { 
+        request: request,
+        token: "TOKEN_API_LEAKOSINT" // Ganti dengan token API LeakOSINT Anda
+      };
+      if (lang) data.lang = lang;
+      if (limit) data.limit = parseInt(limit);
+
+      // Show loading animation in output
+      resultsSection.style.display = 'block';
+      output.innerHTML = `
+        <div class="flex items-center justify-center space-x-2 py-8">
+          <div class="w-4 h-4 bg-blue-500 rounded-full animate-bounce"></div>
+          <div class="w-4 h-4 bg-purple-500 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+          <div class="w-4 h-4 bg-pink-500 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+          <span class="ml-4 text-blue-400">Memproses permintaan...</span>
+        </div>
+      `;
+
+      try {
+        const response = await fetch('/api/leakosint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const json = await response.json();
+        lastResult = JSON.stringify(json, null, 2);
+
+        // Format JSON with syntax highlighting
+        const formatted = syntaxHighlight(lastResult);
+        output.innerHTML = `<code>${formatted}</code>`;
+
+        showToast('Pencarian berhasil!', 'success');
+      } catch (err) {
+        output.innerHTML = `
+          <div class="text-red-400 flex items-center space-x-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span>❌ Gagal memuat hasil: ${err.message}</span>
+          </div>
+        `;
+        showToast('Gagal memuat hasil!', 'error');
+        lastResult = '';
+      } finally {
+        // Reset button state
+        searchBtn.disabled = false;
+        searchText.classList.remove('hidden');
+        loadingText.classList.add('hidden');
+      }
+    }
+
+    function syntaxHighlight(json) {
+      return json
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?)/g, function (match) {
+          let cls = 'json-string';
+          if (/:$/.test(match)) {
+            cls = 'json-key';
+          }
+          return '<span class="' + cls + '">' + match + '</span>';
+        })
+        .replace(/(-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, '<span class="json-number">$1</span>')
+        .replace(/\b(true|false)\b/g, '<span class="json-boolean">$1</span>')
+        .replace(/\b(null)\b/g, '<span class="json-null">$1</span>');
+    }
+
+    async function copyResults() {
+      if (!lastResult) {
+        showToast('Tidak ada hasil untuk disalin!', 'error');
+        return;
+      }
+
+      try {
+        await navigator.clipboard.writeText(lastResult);
+        
+        // Update copy button temporarily
+        const copyBtn = document.getElementById('copyBtn');
+        const copyText = document.getElementById('copyText');
+        const originalText = copyText.textContent;
+        
+        copyBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+        copyBtn.classList.add('bg-blue-500', 'hover:bg-blue-600');
+        copyText.textContent = 'Tersalin!';
+        
+        setTimeout(() => {
+          copyBtn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
+          copyBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+          copyText.textContent = originalText;
+        }, 2000);
+        
+        showToast('Hasil berhasil disalin ke clipboard!', 'success');
+      } catch (err) {
+        showToast('Gagal menyalin hasil!', 'error');
+      }
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      
+      // Update toast styling based on type
+      toast.className = 'fixed top-4 left-1/2 transform -translate-x-1/2 translate-y-[-100px] sm:top-4 sm:right-4 sm:left-auto sm:transform-none sm:translate-x-full text-white px-4 py-3 rounded-lg shadow-lg transition-all duration-300 z-50 text-sm max-w-xs';
+      
+      if (type === 'error') {
+        toast.classList.add('bg-red-500');
+      } else {
+        toast.classList.add('bg-green-500');
+      }
+      
+      toast.querySelector('span').textContent = message;
+      
+      // Show toast - different animations for mobile vs desktop
+      if (window.innerWidth < 640) { // Mobile
+        toast.classList.remove('translate-y-[-100px]');
+        toast.classList.add('translate-y-0');
+      } else { // Desktop
+        toast.classList.remove('sm:translate-x-full');
+        toast.classList.add('sm:translate-x-0');
+      }
+      
+      // Hide toast after 3 seconds
+      setTimeout(() => {
+        if (window.innerWidth < 640) { // Mobile
+          toast.classList.remove('translate-y-0');
+          toast.classList.add('translate-y-[-100px]');
+        } else { // Desktop
+          toast.classList.remove('sm:translate-x-0');
+          toast.classList.add('sm:translate-x-full');
+        }
+      }, 3000);
+    }
+
+    // Add keyboard shortcut for search (Ctrl/Cmd + Enter)
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        sendRequest();
+      }
+    });
+
+    // Auto-resize textarea
+    const textarea = document.getElementById('request');
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
+    });
+  </script>
+</body>
+</html>
