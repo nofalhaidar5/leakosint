@@ -1,5 +1,5 @@
 {
-  "name": "leakosint-app",
+  "name": "leakosint",
   "version": "1.0.0",
   "description": "LeakOSINT frontend + backend",
   "type": "module",
