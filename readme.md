@@ -15,7 +15,7 @@ Web interface untuk LeakOSINT API - OSINT Search Tool untuk pencarian informasi 
 
 1. **Clone repository**
    ```bash
-   git clone https://github.com/nofalhaidar5/leakosint
+   git clone https://github.com/dandidandil123/leakosint
    cd leakosint
    ```
 
